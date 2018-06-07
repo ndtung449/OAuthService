@@ -135,6 +135,7 @@ namespace OAuthService.Web
             services.AddSingleton<ISecretGenerator, SecretGenerator>();
             services.AddScoped<IApiResourceService, ApiResourceService>();
             services.AddScoped<IClientProfileService, ClientProfileService>();
+            services.AddScoped<IUserService, UserService>();
         }
 
         private static void InitializeDbTestData(IApplicationBuilder app)

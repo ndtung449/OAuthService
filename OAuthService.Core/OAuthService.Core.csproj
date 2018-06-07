@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="fluentvalidation" Version="7.6.0" />
     <PackageReference Include="Identityserver4" Version="2.2.0" />
     <PackageReference Include="Identityserver4.AspNetIdentity" Version="2.1.0" />
     <PackageReference Include="Identityserver4.EntityFramework" Version="2.1.1" />

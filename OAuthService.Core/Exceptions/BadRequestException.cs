@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace OAuthService.Exceptions
+namespace OAuthService.Core.Exceptions
 {
     public class BadRequestException : Exception
     {

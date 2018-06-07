@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace OAuthService.Domain.DTOs
 {
-    public class UserForm
+    public class UserUpdateDto
     {
         [Required]
         [MaxLength(Constants.Validation.UserNameMaxLength)]
@@ -11,7 +11,6 @@ namespace OAuthService.Domain.DTOs
 
         [Required]
         [MaxLength(Constants.Validation.EmailMaxLength)]
-        [EmailAddress]
         public string Email { get; set; }
 
         [Required]
@@ -26,19 +25,6 @@ namespace OAuthService.Domain.DTOs
 
         public List<UserClaim> Claims { get; set; }
 
-        [Required]
-        [MaxLength(Constants.Validation.PasswordMaxLength)]
-        [MinLength(Constants.Validation.PasswordMinLength)]
-        public string Password { get; set; }
-    }
-
-    public class UserClaim
-    {
-        [Required]
-        [MaxLength(Constants.Validation.ClaimTypeMaxLength)]
-        public string Type { get; set; }
-
-        [MaxLength(Constants.Validation.ClaimValueMaxLength)]
-        public string Value { get; set; }
+        public bool IsBlocked { get; set; }
     }
 }
