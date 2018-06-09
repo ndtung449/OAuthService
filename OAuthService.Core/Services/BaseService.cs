@@ -1,14 +1,21 @@
 ﻿using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.AspNetCore.Http;
 using OAuthService.Core.Exceptions;
 using System;
 using System.Linq;
-using System.Reflection;
 
 namespace OAuthService.Core.Services
 {
     public abstract class BaseService
     {
+        protected readonly IHttpContextAccessor _contextAccessor;
+
+        public BaseService(IHttpContextAccessor contextAccessor)
+        {
+            _contextAccessor = contextAccessor;
+        }
+
         protected virtual void EnsureModelValid(object model)
         {
             ValidationResult validationResult = Validate(model);
@@ -23,22 +30,12 @@ namespace OAuthService.Core.Services
         {
             if (model == null) throw new ArgumentNullException(nameof(model));
 
-            Type baseValidatorType = typeof(AbstractValidator<>);
+            Type baseValidatorType = typeof(IValidator<>);
             Type modelType = model.GetType();
-            var genericValidatorType = baseValidatorType.MakeGenericType(modelType);
+            Type modelValidatorType = baseValidatorType.MakeGenericType(modelType);
+            var validatorInstance = (IValidator)_contextAccessor.HttpContext.RequestServices.GetService(modelValidatorType);
 
-            Type validatorType = FindValidatorType(Assembly.GetExecutingAssembly(), genericValidatorType);
-
-            var validatorInstance = (IValidator)Activator.CreateInstance(validatorType);
             return validatorInstance.Validate(model);
-        }
-
-
-        protected virtual Type FindValidatorType(Assembly assembly, Type genericValidatorType)
-        {
-            if (assembly == null) throw new ArgumentNullException(nameof(assembly));
-            if (genericValidatorType == null) throw new ArgumentNullException(nameof(genericValidatorType));
-            return assembly.GetTypes().FirstOrDefault(t => t.IsSubclassOf(genericValidatorType));
         }
     }
 }

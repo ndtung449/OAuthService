@@ -18,13 +18,13 @@ namespace OAuthService.Web.APIs
         [HttpGet]
         public async Task<IActionResult> Get(string clientId)
         {
-            ClientProfileViewModel profile = await _clientProfileService.Get(clientId);
+            ClientProfileDto profile = await _clientProfileService.Get(clientId);
 
             return Ok(profile);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(string clientId, [FromBody] ClientProfileForm form)
+        public async Task<IActionResult> Create(string clientId, [FromBody] ClientProfileCreateDto form)
         {
             await _clientProfileService.Create(clientId, form);
             string uri = Url.Action(nameof(Get), new { clientId });
@@ -33,7 +33,7 @@ namespace OAuthService.Web.APIs
         }
 
         [HttpPut]
-        public async Task<IActionResult> Update(string clientId, [FromBody] ClientProfileUpdateForm form)
+        public async Task<IActionResult> Update(string clientId, [FromBody] ClientProfileUpdateDto form)
         {
             await _clientProfileService.Update(clientId, form);
 

@@ -6,16 +6,16 @@ namespace OAuthService.Core.Services
 {
     public interface IApiResourceService
     {
-        Task<PageResult<ApiResourceViewModel>> Get(int take = 100, int skip = 0);
+        Task<PageResult<ApiResourceDto>> Get(int take = 100, int skip = 0);
 
-        Task<ApiResourceViewModel> GetByName(string name);
+        Task<ApiResourceDto> GetByName(string name);
 
-        Task Create(ApiResourceForm resource);
+        Task Create(ApiResourceCreateDto resource);
 
-        Task Update(UpdateApiResourceForm resource);
+        Task Update(ApiResourceUpdateDto resource);
 
         Task Delete(string name);
 
-        Task CreateApiSecret(string name, ApiSecretForm form);
+        Task CreateApiSecret(string name, ApiSecretCreateDto form);
     }
 }

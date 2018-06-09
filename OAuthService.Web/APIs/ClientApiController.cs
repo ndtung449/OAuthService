@@ -1,10 +1,9 @@
 ﻿using OAuthService.Core.Services;
-using IdentityServer4.EntityFramework.Entities;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using OAuthService.Domain.DTOs;
+using IdentityServer4.Models;
 
 namespace OAuthService.Web.APIs
 {
@@ -21,7 +20,7 @@ namespace OAuthService.Web.APIs
         [HttpGet]
         public async Task<IActionResult> Get(string name, string grantType, int take = 100, int skip = 0)
         {
-            PageResult<ClientViewModel> items = await _clientService.Get(name, grantType, take, skip);
+            PageResult<ClientDto> items = await _clientService.Get(name, grantType, take, skip);
             
             return Ok(items);
         }
@@ -29,7 +28,7 @@ namespace OAuthService.Web.APIs
         [HttpGet("getByUri")]
         public async Task<IActionResult> GetByUri(string uri)
         {
-            ClientViewModel client = await _clientService.GetByUri(uri);
+            ClientDto client = await _clientService.GetByUri(uri);
 
             return Ok(client);
         }
@@ -37,43 +36,43 @@ namespace OAuthService.Web.APIs
         [HttpGet("{clientId}")]
         public async Task<IActionResult> GetByClientId(string clientId)
         {
-            ClientViewModel client = await _clientService.GetByClientId(clientId);
+            ClientDto client = await _clientService.GetByClientId(clientId);
 
             return Ok(client);
         }
 
         [HttpPost("ResourceOwner")]
-        public async Task<IActionResult> CreateResourceOwnerPasswordClient([FromBody] NoRedirectUriClientForm form)
+        public async Task<IActionResult> CreateResourceOwnerPasswordClient([FromBody] NoRedirectUriClientCreateDto dto)
         {
-            return await CreateNoRedirectUriClient(form, IdentityServer4.Models.GrantTypes.ResourceOwnerPassword);
+            return await CreateNoRedirectUriClient(dto, GrantTypes.ResourceOwnerPassword);
         }
 
         [HttpPost("ClientCredentials")]
-        public async Task<IActionResult> CreateClientCredentialsClient([FromBody] NoRedirectUriClientForm form)
+        public async Task<IActionResult> CreateClientCredentialsClient([FromBody] NoRedirectUriClientCreateDto dto)
         {
-            return await CreateNoRedirectUriClient(form, IdentityServer4.Models.GrantTypes.ClientCredentials);
+            return await CreateNoRedirectUriClient(dto, GrantTypes.ClientCredentials);
         }
 
         [HttpPost("AuthorizationCode")]
-        public async Task<IActionResult> CreateAuthorizationCodeClient([FromBody] HasRedirectUriClientForm form)
+        public async Task<IActionResult> CreateAuthorizationCodeClient([FromBody] HasRedirectUriClientCreateDto dto)
         {
-            return await CreateHasRedirectUriClient(form, IdentityServer4.Models.GrantTypes.Code);
+            return await CreateHasRedirectUriClient(dto, GrantTypes.Code);
         }
 
         [HttpPost("Implicit")]
-        public async Task<IActionResult> CreateImplicitClient([FromBody] HasRedirectUriClientForm form)
+        public async Task<IActionResult> CreateImplicitClient([FromBody] HasRedirectUriClientCreateDto dto)
         {
-            return await CreateHasRedirectUriClient(form, IdentityServer4.Models.GrantTypes.Implicit);
+            return await CreateHasRedirectUriClient(dto, GrantTypes.Implicit);
         }
 
         [HttpPost("Hybrid")]
-        public async Task<IActionResult> CreateHybridClient([FromBody] HasRedirectUriClientForm form)
+        public async Task<IActionResult> CreateHybridClient([FromBody] HasRedirectUriClientCreateDto dto)
         {
-            return await CreateHasRedirectUriClient(form, IdentityServer4.Models.GrantTypes.HybridAndClientCredentials);
+            return await CreateHasRedirectUriClient(dto, GrantTypes.HybridAndClientCredentials);
         }
 
         [HttpPut]
-        public async Task<IActionResult> UpdateClient([FromBody] UpdateClientForm form)
+        public async Task<IActionResult> UpdateClient([FromBody] ClientUpdateDto form)
         {
             await _clientService.Update(form);
 
@@ -88,57 +87,24 @@ namespace OAuthService.Web.APIs
             return NoContent();
         }
 
-        private async Task<IActionResult> CreateNoRedirectUriClient([FromBody] NoRedirectUriClientForm form, ICollection<string> grantTypes)
+        private async Task<IActionResult> CreateNoRedirectUriClient(
+            [FromBody] NoRedirectUriClientCreateDto dto,
+            ICollection<string> grantTypes)
         {
-            Client client = BuildClient(
-                form.Name,
-                form.Uri,
-                form.Scopes,
-                grantTypes);
-
-            ClientCreated result = await _clientService.Create(client);
+            ClientCreatedDto result = await _clientService.CreateNoRedirectUri(dto, grantTypes);
             string uri = Url.Action(nameof(GetByClientId), new { result.ClientId });
 
             return Created(uri, result);
         }
 
-        private async Task<IActionResult> CreateHasRedirectUriClient([FromBody] HasRedirectUriClientForm form, ICollection<string> grantTypes)
+        private async Task<IActionResult> CreateHasRedirectUriClient(
+            [FromBody] HasRedirectUriClientCreateDto dto,
+            ICollection<string> grantTypes)
         {
-            Client client = BuildClient(
-                form.Name,
-                form.Uri,
-                form.Scopes,
-                grantTypes,
-                form.RedirectUri,
-                form.PostLogoutRedirectUri);
-
-            ClientCreated result = await _clientService.Create(client);
+            ClientCreatedDto result = await _clientService.CreateHasRedirectUri(dto, grantTypes);
             string uri = Url.Action(nameof(GetByClientId), new { result.ClientId });
 
             return Created(uri, result);
-        }
-
-        private Client BuildClient(
-            string name,
-            string uri,
-            List<string> scopes,
-            ICollection<string> grantTypes,
-            string redirectUri = null,
-            string postLogoutRedirectUri = null)
-        {
-            return new Client
-            {
-                ClientName = name,
-                ClientUri = uri,
-                AllowedScopes = scopes.Select(scope => new ClientScope { Scope = scope }).ToList(),
-                AllowedGrantTypes = grantTypes.Select(granType => new ClientGrantType { GrantType = granType }).ToList(),
-                RedirectUris = redirectUri != null
-                    ? new List<ClientRedirectUri> { new ClientRedirectUri { RedirectUri = redirectUri } }
-                    : new List<ClientRedirectUri>(),
-                PostLogoutRedirectUris = postLogoutRedirectUri != null
-                    ? new List<ClientPostLogoutRedirectUri> { new ClientPostLogoutRedirectUri { PostLogoutRedirectUri = postLogoutRedirectUri } }
-                    : new List<ClientPostLogoutRedirectUri>(),
-            };
         }
     }
 }

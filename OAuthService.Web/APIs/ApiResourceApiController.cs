@@ -18,7 +18,7 @@ namespace OAuthService.Web.APIs
         [HttpGet]
         public async Task<IActionResult> Get(int take = 100, int skip = 0)
         {
-            PageResult<ApiResourceViewModel> items = await _apiResourceService.Get(take, skip);
+            PageResult<ApiResourceDto> items = await _apiResourceService.Get(take, skip);
 
             return Ok(items);
         }
@@ -26,13 +26,13 @@ namespace OAuthService.Web.APIs
         [HttpGet("{name}")]
         public async Task<IActionResult> GetByName (string name)
         {
-            ApiResourceViewModel item = await _apiResourceService.GetByName(name);
+            ApiResourceDto item = await _apiResourceService.GetByName(name);
 
             return Ok(item);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] ApiResourceForm form)
+        public async Task<IActionResult> Create([FromBody] ApiResourceCreateDto form)
         {
             await _apiResourceService.Create(form);
             string uri = Url.Action(nameof(GetByName), new { form.Name });
@@ -41,7 +41,7 @@ namespace OAuthService.Web.APIs
         }
 
         [HttpPut]
-        public async Task<IActionResult> Update([FromBody] UpdateApiResourceForm form)
+        public async Task<IActionResult> Update([FromBody] ApiResourceUpdateDto form)
         {
             await _apiResourceService.Update(form);
 
@@ -57,7 +57,7 @@ namespace OAuthService.Web.APIs
         }
 
         [HttpPost("{name}/createSecret")]
-        public async Task<IActionResult> CreateSecret(string name, [FromBody] ApiSecretForm form)
+        public async Task<IActionResult> CreateSecret(string name, [FromBody] ApiSecretCreateDto form)
         {
             await _apiResourceService.CreateApiSecret(name, form);
 

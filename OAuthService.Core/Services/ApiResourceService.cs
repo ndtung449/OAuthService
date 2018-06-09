@@ -7,27 +7,31 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using OAuthService.Core.Exceptions;
+using Microsoft.AspNetCore.Http;
 
 namespace OAuthService.Core.Services
 {
-    public class ApiResourceService : IApiResourceService
+    public class ApiResourceService : BaseService, IApiResourceService
     {
         private readonly IConfigurationRepository<ApiResource> _apiResourceRepository;
         private readonly ISecretGenerator _secretGenerator;
 
-        public ApiResourceService(IConfigurationRepository<ApiResource> apiResourceRepository, ISecretGenerator secretGenerator)
+        public ApiResourceService(
+            IHttpContextAccessor contextAccessor,
+            IConfigurationRepository<ApiResource> apiResourceRepository,
+            ISecretGenerator secretGenerator) : base(contextAccessor)
         {
             _apiResourceRepository = apiResourceRepository;
             _secretGenerator = secretGenerator;
         }
 
-        public async Task<PageResult<ApiResourceViewModel>> Get(int take = 100, int skip = 0)
+        public async Task<PageResult<ApiResourceDto>> Get(int take = 100, int skip = 0)
         {
             IQueryable<ApiResource> query = _apiResourceRepository.Query().AsNoTracking();
 
             int total = await query.CountAsync();
 
-            List<ApiResourceViewModel> items = await query
+            List<ApiResourceDto> items = await query
                 .Include(r => r.Scopes)
                 .Include(r => r.UserClaims)
                 .Skip(skip)
@@ -35,31 +39,33 @@ namespace OAuthService.Core.Services
                 .Select(resource => MapApiResourceViewModel(resource))
                 .ToListAsync();
 
-            return new PageResult<ApiResourceViewModel>(total, items);
+            return new PageResult<ApiResourceDto>(total, items);
         }
 
-        public async Task<ApiResourceViewModel> GetByName(string name)
+        public async Task<ApiResourceDto> GetByName(string name)
         {
             ApiResource resource = await FindByName(name, includeRelatedEntities: true, throwIfNotFound: true);
 
             return MapApiResourceViewModel(resource);
         }
 
-        public async Task Create(ApiResourceForm form)
+        public async Task Create(ApiResourceCreateDto dto)
         {
-            ApiResource existResource = await FindByName(form.Name);
+            EnsureModelValid(dto);
+
+            ApiResource existResource = await FindByName(dto.Name);
 
             if (existResource != null)
             {
-                throw new BadRequestException($"ApiResource with name '{form.Name}' already exist.");
+                throw new BadRequestException($"ApiResource with name '{dto.Name}' already exist.");
             }
 
-            ApiResource resource = BuildApiResource(form);
+            ApiResource resource = BuildApiResource(dto);
             _apiResourceRepository.Add(resource);
             await _apiResourceRepository.SaveChangesAsync();
         }
 
-        private ApiResource BuildApiResource(ApiResourceForm form)
+        private ApiResource BuildApiResource(ApiResourceCreateDto form)
         {
             ApiResource resource = new ApiResource
             {
@@ -87,24 +93,28 @@ namespace OAuthService.Core.Services
             return resource;
         }
 
-        public async Task Update(UpdateApiResourceForm form)
+        public async Task Update(ApiResourceUpdateDto dto)
         {
+            EnsureModelValid(dto);
+
             ApiResource resource = await FindByName(
-                form.Name,
+                dto.Name,
                 tracking: true,
                 includeRelatedEntities: true,
                 throwIfNotFound: true);
 
-            resource.Description = form.Description;
-            resource.DisplayName = form.DisplayName;
-            resource.Scopes = form.Scopes?.Select(s => new ApiScope { Name = s }).ToList();
-            resource.UserClaims = form.UserClaims?.Select(c => new ApiResourceClaim { Type = c }).ToList();
+            resource.Description = dto.Description;
+            resource.DisplayName = dto.DisplayName;
+            resource.Scopes = dto.Scopes?.Select(s => new ApiScope { Name = s }).ToList();
+            resource.UserClaims = dto.UserClaims?.Select(c => new ApiResourceClaim { Type = c }).ToList();
 
             await _apiResourceRepository.SaveChangesAsync();
         }
 
-        public async Task CreateApiSecret(string name, ApiSecretForm form)
+        public async Task CreateApiSecret(string name, ApiSecretCreateDto dto)
         {
+            EnsureModelValid(dto);
+
             ApiResource resource = await _apiResourceRepository
                 .Query()
                 .Include(r => r.Secrets)
@@ -117,8 +127,9 @@ namespace OAuthService.Core.Services
 
             resource.Secrets.Add(new ApiSecret
             {
-                Description = form.Description,
-                Value = _secretGenerator.Hash(form.Secret)
+                Description = dto.Description,
+                Value = _secretGenerator.Hash(dto.Secret),
+                Expiration = DateTime.Now.AddYears(Constants.ApiSecretLifeTimeInYear)
             });
 
             await _apiResourceRepository.SaveChangesAsync();
@@ -163,9 +174,9 @@ namespace OAuthService.Core.Services
             return resource;
         }
 
-        private ApiResourceViewModel MapApiResourceViewModel(ApiResource resource)
+        private ApiResourceDto MapApiResourceViewModel(ApiResource resource)
         {
-            return new ApiResourceViewModel
+            return new ApiResourceDto
             {
                 Description = resource.Description,
                 DisplayName = resource.DisplayName,

@@ -2,7 +2,7 @@
 
 namespace OAuthService.Domain.DTOs
 {
-    public class ApiResourceViewModel
+    public class ApiResourceDto
     {
         public string Name { get; set; }
 

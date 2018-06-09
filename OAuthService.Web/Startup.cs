@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Security.Claims;
+using FluentValidation;
 using IdentityModel;
 using IdentityServer4.EntityFramework.DbContexts;
 using IdentityServer4.EntityFramework.Mappers;
@@ -18,7 +19,9 @@ using Microsoft.Extensions.DependencyInjection;
 using OAuthService.Core;
 using OAuthService.Core.Repositories;
 using OAuthService.Core.Services;
+using OAuthService.Domain.DTOs;
 using OAuthService.Domain.Entities;
+using OAuthService.Domain.Validators;
 using Swashbuckle.AspNetCore.Swagger;
 
 namespace OAuthService.Web
@@ -127,8 +130,6 @@ namespace OAuthService.Web
 
         private void ConfigureDI(IServiceCollection services)
         {
-            //services.AddSingleton<IEmailSender, EmailSender>();
-            //services.AddSingleton<ISmsSender, SmsSender>();
             services.AddScoped<IClientService, ClientService>();
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped(typeof(IConfigurationRepository<>), typeof(ConfigurationRepository<>));
@@ -136,6 +137,18 @@ namespace OAuthService.Web
             services.AddScoped<IApiResourceService, ApiResourceService>();
             services.AddScoped<IClientProfileService, ClientProfileService>();
             services.AddScoped<IUserService, UserService>();
+
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddSingleton<IValidator<UserCreateDto>, UserCreateDtoValidator>();
+            services.AddSingleton<IValidator<UserUpdateDto>, UserUpdateDtoValidator>();
+            services.AddSingleton<IValidator<HasRedirectUriClientCreateDto>, HasRedirectUriClientCreateDtoValidator>();
+            services.AddSingleton<IValidator<NoRedirectUriClientCreateDto>, NoRedirectUriClientCreateDtoValidator>();
+            services.AddSingleton<IValidator<ClientUpdateDto>, ClientUpdateDtoValidator>();
+            services.AddSingleton<IValidator<ClientProfileCreateDto>, ClientProfileCreateDtoValidator>();
+            services.AddSingleton<IValidator<ClientProfileUpdateDto>, ClientProfileUpdateDtoValidator>();
+            services.AddSingleton<IValidator<ApiSecretCreateDto>, ApiSecretCreateDtoValidator>();
+            services.AddSingleton<IValidator<ApiResourceCreateDto>, ApiResourceCreateDtoValidator>();
+            services.AddSingleton<IValidator<ApiResourceUpdateDto>, ApiResourceUpdateDtoValidator>();
         }
 
         private static void InitializeDbTestData(IApplicationBuilder app)

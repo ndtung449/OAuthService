@@ -6,23 +6,25 @@ using System.Linq;
 using System.Threading.Tasks;
 using OAuthService.Core.Exceptions;
 using OAuthService.Domain.Entities;
+using Microsoft.AspNetCore.Http;
 
 namespace OAuthService.Core.Services
 {
-    public class ClientProfileService : IClientProfileService
+    public class ClientProfileService : BaseService, IClientProfileService
     {
         private readonly IRepository<ClientProfile> _clientRepository;
 
-        public ClientProfileService(IRepository<ClientProfile> clientRepository)
+        public ClientProfileService(IHttpContextAccessor contextAccessor, IRepository<ClientProfile> clientRepository)
+            : base(contextAccessor)
         {
             _clientRepository = clientRepository;
         }
 
-        public async Task<ClientProfileViewModel> Get(string clientId)
+        public async Task<ClientProfileDto> Get(string clientId)
         {
             ClientProfile profile = await FindByClientId(clientId, throwsIfNotFound: true);
 
-            return new ClientProfileViewModel
+            return new ClientProfileDto
             {
                 ClientId = profile.ClientId,
                 FaviconLocalUrl = profile.FaviconLocalUrl,
@@ -30,8 +32,10 @@ namespace OAuthService.Core.Services
             };
         }
 
-        public async Task Create(string clientId, ClientProfileForm form)
+        public async Task Create(string clientId, ClientProfileCreateDto dto)
         {
+            EnsureModelValid(dto);
+
             ClientProfile existProfile = await FindByClientId(clientId, tracking: true);
             if(existProfile != null)
             {
@@ -41,19 +45,21 @@ namespace OAuthService.Core.Services
             ClientProfile profile = new ClientProfile
             {
                 ClientId = clientId,
-                FaviconLocalUrl = form.FaviconLocalUrl,
-                FaviconUrl = form.FaviconUrl
+                FaviconLocalUrl = dto.FaviconLocalUrl,
+                FaviconUrl = dto.FaviconUrl
             };
 
             _clientRepository.Add(profile);
             await _clientRepository.SaveChangesAsync();
         }
 
-        public async Task Update(string clientId, ClientProfileUpdateForm form)
+        public async Task Update(string clientId, ClientProfileUpdateDto dto)
         {
+            EnsureModelValid(dto);
+
             ClientProfile profile = await FindByClientId(clientId, tracking: true, throwsIfNotFound: true);
-            profile.FaviconLocalUrl = form.FaviconLocalUrl;
-            profile.FaviconUrl = form.FaviconUrl;
+            profile.FaviconLocalUrl = dto.FaviconLocalUrl;
+            profile.FaviconUrl = dto.FaviconUrl;
             await _clientRepository.SaveChangesAsync();
         }
         

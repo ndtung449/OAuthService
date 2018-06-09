@@ -11,6 +11,7 @@ using OAuthService.Core.Exceptions;
 using OAuthService.Domain.Entities;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Http;
 
 namespace OAuthService.Core.Services
 {
@@ -21,9 +22,10 @@ namespace OAuthService.Core.Services
         private readonly UserManager<User> _userManager;
         
         public UserService(
+            IHttpContextAccessor contextAccessor,
             ILogger<UserService> logger,
             IRepository<User> userRepository,
-            UserManager<User> userManager)
+            UserManager<User> userManager) : base(contextAccessor)
         {
             _logger = logger;
             _userRepository = userRepository;

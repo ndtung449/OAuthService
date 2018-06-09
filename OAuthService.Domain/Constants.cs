@@ -7,6 +7,7 @@
             public const int IdMaxLength = 256;
             public const int UriMaxLength = 1000;
             public const int NameMaxLength = 200;
+            public const int UserNameMinLength = 1;
             public const int UserNameMaxLength = 200;
             public const int PasswordMaxLength = 100;
             public const int PasswordMinLength = 6;

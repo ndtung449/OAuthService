@@ -7,22 +7,25 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using OAuthService.Core.Exceptions;
-using OAuthService.Core;
+using Microsoft.AspNetCore.Http;
 
 namespace OAuthService.Core.Services
 {
-    public class ClientService : IClientService
+    public class ClientService : BaseService, IClientService
     {
         private readonly IConfigurationRepository<Client> _clientRepository;
         private readonly ISecretGenerator _secretGenerator;
 
-        public ClientService(IConfigurationRepository<Client> clientRepository, ISecretGenerator secretGenerator)
+        public ClientService(
+            IHttpContextAccessor contextAccessor,
+            IConfigurationRepository<Client> clientRepository,
+            ISecretGenerator secretGenerator) : base(contextAccessor)
         {
             _clientRepository = clientRepository;
             _secretGenerator = secretGenerator;
         }
 
-        public async Task<ClientViewModel> GetByClientId(string clientId)
+        public async Task<ClientDto> GetByClientId(string clientId)
         {
             Client client = await FindByClientId(clientId, includeRelatedEntities: true);
 
@@ -34,7 +37,7 @@ namespace OAuthService.Core.Services
             return MapClientViewModel(client);
         }
 
-        public async Task<ClientViewModel> GetByUri(string uri)
+        public async Task<ClientDto> GetByUri(string uri)
         {
             Client client = await _clientRepository
                 .Query()
@@ -53,42 +56,35 @@ namespace OAuthService.Core.Services
             return MapClientViewModel(client);
         }
 
-        public async Task<ClientCreated> Create(Client client)
+        public async Task<ClientCreatedDto> CreateHasRedirectUri(HasRedirectUriClientCreateDto dto, ICollection<string> grantTypes)
         {
-            if (!string.IsNullOrEmpty(client.ClientUri))
-            {
-                Client existClient = await FindByUri(client.ClientUri);
+            EnsureModelValid(dto);
 
-                if (existClient != null)
-                {
-                    throw new BadRequestException($"A client with uri '{client.ClientUri}' already exists.");
-                }
-            }
+            Client client = BuildClient(
+                dto.Name,
+                dto.Uri,
+                dto.Scopes,
+                grantTypes,
+                dto.RedirectUri,
+                dto.PostLogoutRedirectUri);
 
-            string clientId = Guid.NewGuid().ToString();
-            client.ClientId = clientId;
-
-            string secret = _secretGenerator.Create();
-            client.ClientSecrets = new List<ClientSecret>
-            {
-                new ClientSecret
-                {
-                    Value = _secretGenerator.Hash(secret),
-                    Expiration = DateTime.Now.AddYears(Constants.ClientSecretLifeTimeInYear)
-                }
-            };
-
-            _clientRepository.Add(client);
-            await _clientRepository.SaveChangesAsync();
-
-            return new ClientCreated
-            {
-                ClientId = clientId,
-                Secret = secret
-            };
+            return await Create(client);
         }
 
-        public async Task<PageResult<ClientViewModel>> Get(string name, string grantType, int take = 100, int skip = 0)
+        public async Task<ClientCreatedDto> CreateNoRedirectUri(NoRedirectUriClientCreateDto dto, ICollection<string> grantTypes)
+        {
+            EnsureModelValid(dto);
+
+            Client client = BuildClient(
+                dto.Name,
+                dto.Uri,
+                dto.Scopes,
+                grantTypes);
+
+            return await Create(client);
+        }
+
+        public async Task<PageResult<ClientDto>> Get(string name, string grantType, int take = 100, int skip = 0)
         {
             IQueryable<Client> query = _clientRepository
                 .Query()
@@ -116,28 +112,30 @@ namespace OAuthService.Core.Services
                 .Take(take)
                 .ToListAsync();
 
-            List<ClientViewModel> items = clients.Select(c => MapClientViewModel(c)).ToList();
+            List<ClientDto> items = clients.Select(c => MapClientViewModel(c)).ToList();
 
-            return new PageResult<ClientViewModel>(total, items);
+            return new PageResult<ClientDto>(total, items);
         }
 
-        public async Task Update(UpdateClientForm form)
+        public async Task Update(ClientUpdateDto dto)
         {
+            EnsureModelValid(dto);
+
             Client existClient = await FindByClientId(
-                form.ClientId,
+                dto.ClientId,
                 tracking: true,
                 includeRelatedEntities: true,
                 throwIfNotFound: true);
 
-            existClient.ClientName = form.ClientName;
-            existClient.ClientUri = form.Uri;
-            existClient.AllowedGrantTypes = form.GrantTypes?.Select(t => new ClientGrantType { GrantType = t }).ToList();
-            existClient.AllowedScopes = form.Scopes?.Select(s => new ClientScope { Scope = s }).ToList();
-            existClient.PostLogoutRedirectUris = form
+            existClient.ClientName = dto.ClientName;
+            existClient.ClientUri = dto.Uri;
+            existClient.AllowedGrantTypes = dto.GrantTypes?.Select(t => new ClientGrantType { GrantType = t }).ToList();
+            existClient.AllowedScopes = dto.Scopes?.Select(s => new ClientScope { Scope = s }).ToList();
+            existClient.PostLogoutRedirectUris = dto
                 .PostLogoutRedirectUris?
                 .Select(u => new ClientPostLogoutRedirectUri { PostLogoutRedirectUri = u })
                 .ToList();
-            existClient.RedirectUris = form.RedirectUris?.Select(u => new ClientRedirectUri { RedirectUri = u }).ToList();
+            existClient.RedirectUris = dto.RedirectUris?.Select(u => new ClientRedirectUri { RedirectUri = u }).ToList();
 
             await _clientRepository.SaveChangesAsync();
         }
@@ -147,6 +145,64 @@ namespace OAuthService.Core.Services
             Client existClient = await FindByClientId(clientId, tracking: true, throwIfNotFound: true);
             _clientRepository.Remove(existClient);
             await _clientRepository.SaveChangesAsync();
+        }
+
+        private async Task<ClientCreatedDto> Create(Client client)
+        {
+            if (!string.IsNullOrEmpty(client.ClientUri))
+            {
+                Client existClient = await FindByUri(client.ClientUri);
+
+                if (existClient != null)
+                {
+                    throw new BadRequestException($"A client with uri '{client.ClientUri}' already exists.");
+                }
+            }
+
+            string clientId = Guid.NewGuid().ToString();
+            client.ClientId = clientId;
+
+            string secret = _secretGenerator.Create();
+            client.ClientSecrets = new List<ClientSecret>
+            {
+                new ClientSecret
+                {
+                    Value = _secretGenerator.Hash(secret),
+                    Expiration = DateTime.Now.AddYears(Constants.ClientSecretLifeTimeInYear)
+                }
+            };
+
+            _clientRepository.Add(client);
+            await _clientRepository.SaveChangesAsync();
+
+            return new ClientCreatedDto
+            {
+                ClientId = clientId,
+                Secret = secret
+            };
+        }
+
+        private Client BuildClient(
+            string name,
+            string uri,
+            List<string> scopes,
+            ICollection<string> grantTypes,
+            string redirectUri = null,
+            string postLogoutRedirectUri = null)
+        {
+            return new Client
+            {
+                ClientName = name,
+                ClientUri = uri,
+                AllowedScopes = scopes.Select(scope => new ClientScope { Scope = scope }).ToList(),
+                AllowedGrantTypes = grantTypes.Select(granType => new ClientGrantType { GrantType = granType }).ToList(),
+                RedirectUris = redirectUri != null
+                    ? new List<ClientRedirectUri> { new ClientRedirectUri { RedirectUri = redirectUri } }
+                    : new List<ClientRedirectUri>(),
+                PostLogoutRedirectUris = postLogoutRedirectUri != null
+                    ? new List<ClientPostLogoutRedirectUri> { new ClientPostLogoutRedirectUri { PostLogoutRedirectUri = postLogoutRedirectUri } }
+                    : new List<ClientPostLogoutRedirectUri>(),
+            };
         }
 
         private async Task<Client> FindByClientId(
@@ -193,9 +249,9 @@ namespace OAuthService.Core.Services
             return await query.FirstOrDefaultAsync(c => c.ClientUri == uri);
         }
 
-        private ClientViewModel MapClientViewModel(Client client)
+        private ClientDto MapClientViewModel(Client client)
         {
-            return new ClientViewModel
+            return new ClientDto
             {
                 ClientId = client.ClientId,
                 ClientName = client.ClientName,
