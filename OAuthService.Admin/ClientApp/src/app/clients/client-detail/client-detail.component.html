@@ -1,0 +1,42 @@
+<div *ngIf="client">
+    <div class="form-group">
+        <label>Client Id:</label>
+        <label class="form-control" disabled>{{client.clientId}}</label>
+    </div>
+    <div class="form-group">
+        <label>Client name:</label>
+        <input class="form-control" placeholder="Client name" [(ngModel)]="client.clientName" name="clientName" />
+    </div>
+    <div class="form-group">
+        <label>Grant types:</label>
+        <input class="form-control" placeholder="Enter grant type" [(ngModel)]="newGrantType" name="grantType" />
+        <button class="btn btn-primary" (click)="addGrantType()" [disabled]="!newGrantType">
+            Add
+        </button>
+        <ul>
+            <li *ngFor="let grantType of client.grantTypes">
+                {{grantType}}
+                <span class="glyphicon glyphicon-remove-sign" (click)="removeGrantType(grantType)"></span>
+            </li>
+        </ul>
+    </div>
+    <div class="form-group">
+        <label>Redirect Uris:</label>
+        <ul>
+            <li *ngFor="let uri of client.redirectUris">{{uri}}</li>
+        </ul>
+    </div>
+    <div class="form-group">
+        <label>Post logout redirect Uris:</label>
+        <ul>
+            <li *ngFor="let uri of client.postLogoutRedirectUris">{{uri}}</li>
+        </ul>
+    </div>
+    <div class="form-group">
+        <label>Scopes:</label>
+        <ul>
+            <li *ngFor="let scope of client.scopes">{{scope}}</li>
+        </ul>
+    </div>
+    <button (click)="goBack()">go back</button>
+</div>

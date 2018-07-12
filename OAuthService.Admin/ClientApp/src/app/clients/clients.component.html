@@ -1,0 +1,14 @@
+<table class="table table-sm table-bordered table-striped">
+    <tr>
+        <th>#</th>
+        <th>Id</th>
+        <th>Name</th>
+        <th></th>
+    </tr>
+    <tr *ngFor="let client of clients; let i = index">
+        <td>{{i + 1}}</td>
+        <td>{{client.clientId}}</td>
+        <td>{{client.clientName}}</td>
+        <td><a routerLink="./detail/{{client.clientId}}">Edit</a></td>
+    </tr>
+</table>
