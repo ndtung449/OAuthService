@@ -61,8 +61,8 @@ namespace OAuthService.Core.Services
             EnsureModelValid(dto);
 
             Client client = BuildClient(
-                dto.Name,
-                dto.Uri,
+                dto.ClientName,
+                dto.ClientUri,
                 dto.Scopes,
                 grantTypes,
                 dto.RedirectUri,
@@ -76,8 +76,8 @@ namespace OAuthService.Core.Services
             EnsureModelValid(dto);
 
             Client client = BuildClient(
-                dto.Name,
-                dto.Uri,
+                dto.ClientName,
+                dto.ClientUri,
                 dto.Scopes,
                 grantTypes);
 
@@ -128,7 +128,7 @@ namespace OAuthService.Core.Services
                 throwIfNotFound: true);
 
             existClient.ClientName = dto.ClientName;
-            existClient.ClientUri = dto.Uri;
+            existClient.ClientUri = dto.ClientUri;
             existClient.AllowedGrantTypes = dto.GrantTypes?.Select(t => new ClientGrantType { GrantType = t }).ToList();
             existClient.AllowedScopes = dto.Scopes?.Select(s => new ClientScope { Scope = s }).ToList();
             existClient.PostLogoutRedirectUris = dto
@@ -255,8 +255,9 @@ namespace OAuthService.Core.Services
             {
                 ClientId = client.ClientId,
                 ClientName = client.ClientName,
+                ClientUri = client.ClientUri,
                 GrantTypes = client.AllowedGrantTypes.Select(t => t.GrantType).ToList(),
-                Scope = client.AllowedScopes.Select(s => s.Scope).ToList(),
+                Scopes = client.AllowedScopes.Select(s => s.Scope).ToList(),
                 RedirectUris = client.RedirectUris.Select(u => u.RedirectUri).ToList(),
                 PostLogoutRedirectUris = client.PostLogoutRedirectUris.Select(u => u.PostLogoutRedirectUri).ToList()
             };

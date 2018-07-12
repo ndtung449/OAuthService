@@ -8,10 +8,10 @@ namespace OAuthService.Domain.Validators
     {
         public NoRedirectUriClientCreateDtoValidator()
         {
-            RuleFor(x => x.Name)
+            RuleFor(x => x.ClientName)
                 .MaximumLength(Constants.Validation.NameMaxLength)
                 .WithMessage($"{{PropertyName}} cannot exceed ${Constants.Validation.NameMaxLength} characters.");
-            RuleFor(x => x.Uri).IsAValidUri();
+            RuleFor(x => x.ClientUri).IsAValidUri();
             RuleFor(x => x.Scopes)
                 .NotEmpty()
                 .WithMessage("{PropertyName} cannot be empty.");

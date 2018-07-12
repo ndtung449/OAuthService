@@ -1,18 +1,40 @@
-<div *ngIf="client">
-    <div class="form-group">
+<h1>{{isCreated ? 'Create Client' : 'Edit Client'}}</h1>
+<form novalidate [formGroup]="form" *ngIf="isCreated || client" style="padding-top: 1em">
+    <div *ngIf="!isCreated" class="form-group">
         <label>Client Id:</label>
         <label class="form-control" disabled>{{client.clientId}}</label>
     </div>
     <div class="form-group">
         <label>Client name:</label>
-        <input class="form-control" placeholder="Client name" [(ngModel)]="client.clientName" name="clientName" />
+        <input class="form-control" placeholder="Client name" [(ngModel)]="client.clientName" name="clientName" formControlName="clientName" />
+        <ul class="text-danger list-unstyled" *ngIf="(summitting || form.controls['clientName'].dirty) && form.controls['clientName'].invalid">
+            <li *ngFor="let error of form.controls['clientName'].getValidationMessages()">
+                {{error}}
+            </li>
+        </ul>
+    </div>
+    <div class="form-group">
+        <label>Client Uri:</label>
+        <input class="form-control" placeholder="Client Uri" [(ngModel)]="client.clientUri" name="clientUri" formControlName="clientUri" />
+        <ul class="text-danger list-unstyled" *ngIf="form.controls['clientUri'].dirty && form.controls['clientUri'].invalid">
+            <li *ngFor="let error of form.controls['clientUri'].getValidationMessages()">
+                {{error}}
+            </li>
+        </ul>
     </div>
     <div class="form-group">
         <label>Grant types:</label>
-        <input class="form-control" placeholder="Enter grant type" [(ngModel)]="newGrantType" name="grantType" />
-        <button class="btn btn-primary" (click)="addGrantType()" [disabled]="!newGrantType">
+        <select class="form-control" [(ngModel)]="newGrantType" formControlName="grantType">
+            <option *ngFor="let grantType of grantTypes" [ngValue]="grantType">{{grantType}}</option>
+        </select>
+        <button class="btn btn-primary" (click)="addGrantType()" [disabled]="form.controls['grantType'].invalid">
             Add
         </button>
+        <ul class="text-danger list-unstyled" *ngIf="form.controls['grantType'].dirty && form.controls['grantType'].invalid">
+            <li *ngFor="let error of form.controls['grantType'].getValidationMessages()">
+                {{error}}
+            </li>
+        </ul>
         <ul>
             <li *ngFor="let grantType of client.grantTypes">
                 {{grantType}}
@@ -20,23 +42,64 @@
             </li>
         </ul>
     </div>
+
     <div class="form-group">
         <label>Redirect Uris:</label>
+        <input class="form-control" placeholder="Enter a new redirect uri" [(ngModel)]="newRedirectUri" name="redirectUri" formControlName="redirectUri" />
+        <button class="btn btn-primary" (click)="addRedirectUri()" [disabled]="!form.controls['redirectUri'].dirty || form.controls['redirectUri'].invalid">
+            Add
+        </button>
+        <ul class="text-danger list-unstyled" *ngIf="form.controls['redirectUri'].dirty && form.controls['redirectUri'].invalid">
+            <li *ngFor="let error of form.controls['redirectUri'].getValidationMessages()">
+                {{error}}
+            </li>
+        </ul>
         <ul>
-            <li *ngFor="let uri of client.redirectUris">{{uri}}</li>
+            <li *ngFor="let uri of client.redirectUris">
+                {{uri}}
+                <span class="glyphicon glyphicon-remove-sign" (click)="removeRedirectUri(uri)"></span>
+            </li>
         </ul>
     </div>
+
     <div class="form-group">
         <label>Post logout redirect Uris:</label>
+        <input class="form-control" placeholder="Enter a new post logout redirect uri" [(ngModel)]="newPostLogoutRedirectUri" name="postLogoutRedirectUri" formControlName="postLogoutRedirectUri" />
+        <button class="btn btn-primary" (click)="addPostLogoutRedirectUri()" [disabled]="!form.controls['postLogoutRedirectUri'].dirty || form.controls['postLogoutRedirectUri'].invalid">
+            Add
+        </button>
+        <ul class="text-danger list-unstyled" *ngIf="form.controls['postLogoutRedirectUri'].dirty && form.controls['postLogoutRedirectUri'].invalid">
+            <li *ngFor="let error of form.controls['postLogoutRedirectUri'].getValidationMessages()">
+                {{error}}
+            </li>
+        </ul>
         <ul>
-            <li *ngFor="let uri of client.postLogoutRedirectUris">{{uri}}</li>
+            <li *ngFor="let uri of client.postLogoutRedirectUris">
+                {{uri}}
+                <span class="glyphicon glyphicon-remove-sign" (click)="removePostLogoutRedirectUri(uri)"></span>
+            </li>
         </ul>
     </div>
+
     <div class="form-group">
         <label>Scopes:</label>
+        <input class="form-control" placeholder="Enter a new scope" [(ngModel)]="newScope" name="scope" formControlName="scope" />
+        <button class="btn btn-primary" (click)="addScope()" [disabled]="!form.controls['scope'].dirty || form.controls['scope'].invalid">
+            Add
+        </button>
+        <ul class="text-danger list-unstyled" *ngIf="form.controls['scope'].dirty && form.controls['scope'].invalid">
+            <li *ngFor="let error of form.controls['scope'].getValidationMessages()">
+                {{error}}
+            </li>
+        </ul>
         <ul>
-            <li *ngFor="let scope of client.scopes">{{scope}}</li>
+            <li *ngFor="let scope of client.scopes">
+                {{scope}}
+                <span class="glyphicon glyphicon-remove-sign" (click)="removeScope(scope)"></span>
+            </li>
         </ul>
     </div>
-    <button (click)="goBack()">go back</button>
-</div>
+
+    <button class="btn btn-primary" type="submit" (click)="save()" [disabled]="submitting || form.invalid">{{isCreated ? 'Create' : 'Save'}}</button>
+    <button class="btn btn-secondary" (click)="goBack()">Go back</button>
+</form>

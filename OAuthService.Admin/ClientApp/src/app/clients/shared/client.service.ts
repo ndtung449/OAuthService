@@ -34,40 +34,21 @@ export class ClientService {
     getById(id: string): Observable<Client> {
         return this.get().pipe(
             map(clients => {
-            return clients.find(c => c.clientId === id);
-        }));
+                return clients.find(c => c.clientId === id);
+            }));
     }
 
     create(client: Client): Observable<Client> {
-        return this.httpClient.post<Client>(this.clientUrl, client, httpOptions)
-            .pipe(
-                catchError(this.handleError<Client>('create'))
-            );
+        return this.httpClient.post<Client>(`${this.clientUrl}/ResourceOwner`, client, httpOptions);
     }
 
     update(client: Client): Observable<Client> {
-        return this.httpClient.put<Client>(this.clientUrl, client, httpOptions)
-            .pipe(
-                catchError(this.handleError<Client>('update'))
-            );
+        return this.httpClient.put<Client>(this.clientUrl, client, httpOptions);
     }
 
     delete(id: string): Observable<Client> {
         const url = `${this.clientUrl}/${id}`;
 
-        return this.httpClient.delete<Client>(url, httpOptions).pipe(
-            catchError(this.handleError<Client>('delete'))
-        );
-    }
-
-    private handleError<T>(operation = 'operation', result?: T) {
-        return (error: any): Observable<T> => {
-
-            // TODO: send the error to remote logging infrastructure
-            console.error(error); // log to console instead
-
-            // Let the app keep running by returning an empty result.
-            return of(result as T);
-        };
+        return this.httpClient.delete<Client>(url, httpOptions);
     }
 }

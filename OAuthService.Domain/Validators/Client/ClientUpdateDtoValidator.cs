@@ -11,11 +11,13 @@ namespace OAuthService.Domain.Validators
             RuleFor(x => x.ClientId)
                 .NotEmpty()
                 .WithMessage("{PropertyName} cannot be empty.");
-            RuleFor(x => x.ClientName).IsASafeString(maxLength: Constants.Validation.NameMaxLength);
+            RuleFor(x => x.ClientName)
+                .MaximumLength(Constants.Validation.NameMaxLength)
+                .WithMessage($"{{PropertyName}} cannot exceed ${Constants.Validation.NameMaxLength} characters.");
             RuleFor(x => x.GrantTypes)
                 .NotEmpty()
                 .WithMessage("{PropertyName} cannot be empty.");
-            RuleFor(x => x.Uri).IsAValidUri();
+            RuleFor(x => x.ClientUri).IsAValidUri();
             RuleFor(x => x.Scopes)
                 .NotEmpty()
                 .WithMessage("{PropertyName} cannot be empty.");
