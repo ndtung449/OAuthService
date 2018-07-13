@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ClientService } from '../shared/client.service';
+import { ClientService } from '../../core/services/client.service';
 import { Location } from '@angular/common';
-import { Client } from '../shared/client.model';
+import { Client } from '../../core/models/client.model';
 import { ClientFormGroup } from '../shared/form.model';
 
 const GRANT_TYPES = [

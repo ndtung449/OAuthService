@@ -1,11 +1,10 @@
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
-import { Client } from './client.model';
-import { catchError, map } from 'rxjs/operators';
-import { of } from 'rxjs/observable/of';
 import { Observable } from 'rxjs/Observable';
+import { map } from 'rxjs/operators';
 import { ReplaySubject } from 'rxjs/ReplaySubject';
 import { PageResult } from '../../shared/pageResult.model';
+import { Client } from '../models/index';
 
 const httpOptions = {
     headers: new HttpHeaders({
