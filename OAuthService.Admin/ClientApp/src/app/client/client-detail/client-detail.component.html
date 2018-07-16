@@ -83,8 +83,10 @@
 
     <div class="form-group">
         <label>Scopes:</label>
-        <input class="form-control" placeholder="Enter a new scope" [(ngModel)]="newScope" name="scope" formControlName="scope" />
-        <button class="btn btn-primary" (click)="addScope()" [disabled]="!form.controls['scope'].dirty || form.controls['scope'].invalid">
+        <select class="form-control" [(ngModel)]="newScope" formControlName="scope">
+            <option *ngFor="let resource of apiResources" [ngValue]="resource.name">{{resource.name}}</option>
+        </select>
+        <button class="btn btn-primary" (click)="addScope()" [disabled]="form.controls['scope'].invalid">
             Add
         </button>
         <ul class="text-danger list-unstyled" *ngIf="form.controls['scope'].dirty && form.controls['scope'].invalid">

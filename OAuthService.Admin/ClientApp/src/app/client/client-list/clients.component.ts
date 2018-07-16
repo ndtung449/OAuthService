@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ClientService } from '../../core/services/client.service';
-import { Client } from '../../core/models/client.model';
+import { ClientModel } from '../../core/models/index';
 import { Router, ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -10,7 +10,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 })
 export class ClientsComponent implements OnInit {
 
-    public clients: Array<Client> = [];
+    public clients: Array<ClientModel> = [];
 
     constructor(
         private clientService: ClientService,

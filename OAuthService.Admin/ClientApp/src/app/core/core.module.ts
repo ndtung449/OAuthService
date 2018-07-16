@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ClientService } from './services';
+import { ClientService, ApiResourceService } from './services/index';
 
 @NgModule({
     imports: [
@@ -8,6 +8,7 @@ import { ClientService } from './services';
     ],
     providers: [
         ClientService,
+        ApiResourceService,
     ],
     declarations: []
 })

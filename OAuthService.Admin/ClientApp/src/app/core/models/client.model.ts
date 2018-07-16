@@ -1,4 +1,4 @@
-export class Client {
+export class ClientModel {
     clientId: string;
     clientName: string;
     clientUri: string;

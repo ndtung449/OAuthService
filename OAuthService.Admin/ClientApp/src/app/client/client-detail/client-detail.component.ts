@@ -1,8 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { ClientService } from '../../core/services/client.service';
+import { ClientService, ApiResourceService } from '../../core/services';
 import { Location } from '@angular/common';
-import { Client } from '../../core/models/client.model';
+import { ClientModel, ApiResourceModel } from '../../core/models/index';
 import { ClientFormGroup } from '../shared/form.model';
 
 const GRANT_TYPES = [
@@ -20,7 +20,7 @@ const GRANT_TYPES = [
 export class ClientDetailComponent implements OnInit {
 
     public grantTypes = GRANT_TYPES;
-    public client: Client;
+    public client: ClientModel;
     public isCreated = true;
     public form: ClientFormGroup = new ClientFormGroup();
     public submitting = false;
@@ -28,26 +28,35 @@ export class ClientDetailComponent implements OnInit {
     public newRedirectUri: string;
     public newPostLogoutRedirectUri: string;
     public newScope: string;
+    public apiResources: Array<ApiResourceModel> = [];
 
     constructor(
         private route: ActivatedRoute,
         private clientService: ClientService,
-        private location: Location
+        private location: Location,
+        private apiResourceService: ApiResourceService,
     ) { }
 
     ngOnInit(): void {
         const id = this.route.snapshot.paramMap.get('id');
         if (id) {
             this.isCreated = false;
-            this.getClient(id);
+            this.getClients(id);
         } else {
-            this.client = new Client();
+            this.client = new ClientModel();
         }
+        this.getApiResources();
     }
 
-    private getClient(id: string): void {
+    private getClients(id: string): void {
         this.clientService.getById(id)
             .subscribe(client => this.client = client);
+    }
+
+    private getApiResources(): void {
+        this.apiResourceService.get().subscribe(result => {
+            this.apiResources = result;
+        });
     }
 
     addGrantType(): void {
